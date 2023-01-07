@@ -5,6 +5,7 @@ import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import morgan from 'morgan';
+import routes from './routes/index';
 
 
 //Middleware
@@ -17,9 +18,7 @@ app.use(morgan('dev'))
 
 
 //Routes
-app.get('/', (req, res) => {
-    res.json({msg:'Hello blog-app'})
-})
+app.use('/api',routes.authRouter)
 
 //DB
 import './config/database'
