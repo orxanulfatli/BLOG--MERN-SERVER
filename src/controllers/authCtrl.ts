@@ -3,7 +3,11 @@ import Users from '../models/userModel';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { generateActiveToken } from '../config/generateToken';
+import sendMail from '../config/sendMail';
+import {validPhone,validateEmail} from '../middleware/valid'
 
+
+const CLIENT_URL = `${process.env.BASE_URL}`
 
 class AuthCtrl {
     register = async (req: Request, res: Response) => {
@@ -17,7 +21,13 @@ class AuthCtrl {
                 name,account,password:passwordHash
             }
             
-            const activeToken = generateActiveToken({newUser})
+            const activeToken = generateActiveToken({ newUser })
+
+            const url = `${CLIENT_URL}/active/${activeToken}`
+            if (validateEmail(account)) {
+                sendMail(account, url, 'Verify your email address.');
+                return res.json({msg:'Success! Please check your email.'})
+            }
             res.json({
                 msg: 'Register successfully.',
                 data: newUser,
