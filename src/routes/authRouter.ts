@@ -4,7 +4,9 @@ import {validRegister} from '../middleware/valid'
 
 const router = Router();
 
-router.post('/register',validRegister,authCtrl.register)
+router.post('/register', validRegister, authCtrl.register)
+router.post('/active', authCtrl.activeAccount)
+
 
 
 export default router;
