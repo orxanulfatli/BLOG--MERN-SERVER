@@ -1,12 +1,16 @@
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
+import { ApiError } from '../utils/apiErrors';
+
 import Users from '../models/userModel';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { generateActiveToken } from '../config/generateToken';
+import { generateAccessToken, generateActiveToken } from '../config/generateToken';
 import sendMail from '../config/sendMail';
 import { validateEmail,validPhone } from '../middleware/valid';
 import { sendSms } from '../config/sendSMS';
-import {INewUser,IDecodedToken} from '../config/interface'
+import { INewUser, IDecodedToken } from '../config/interface'
+import loginService from '../services/loginService';
+import tokenService from '../services/tokenService';
 
 
 const CLIENT_URL = `${process.env.BASE_URL}`
@@ -67,6 +71,63 @@ class AuthCtrl {
             }
 
             return res.status(500).json({ msg: errMsg })
+        }
+    }
+
+    login = async (req: Request, res: Response,next:NextFunction) => {
+        try {
+            const { account, password } = req.body;
+            
+            const { accessToken, refreshToken, user } = await loginService.login(password, account)
+            
+            res.cookie('refreshToken', refreshToken, {
+                httpOnly: true,
+                path: `/api/refresh_token`,
+                maxAge: 30 * 24 * 60 * 60 * 1000,//30 days
+            })
+            
+            res.json({msg:'Login Success!',accessToken,user})
+        } catch (err:any) {
+            next(err)
+        }
+    }
+
+    logout = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            res.clearCookie('refreshToken', {
+                path: `/api/refresh_token`
+            })
+
+            return res.json({msg:'Logged out!'})
+        } catch (error) {
+            next(error)
+        }
+    }
+
+    refresh = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const { refreshToken } = req.cookies;
+            if (!refreshToken) {
+                throw ApiError.UnauthorizedError()
+            }
+
+            //validate refres token
+            const decoded = <IDecodedToken>tokenService.validateRefreshToken(refreshToken)
+            if (!decoded) {
+                throw ApiError.UnauthorizedError()
+            }
+
+            const user = await Users.findById(decoded.id).select('-password');
+            if (!user) {
+                throw ApiError.BadRequest('This account does not exist.')
+            }
+
+            const accessToken = generateAccessToken({ id: user.id })
+            //you must also generate new refresh token and send with cookie and 
+            //dont forget model in db for refresh token
+            res.json({msg:'Success!',accessToken})
+        } catch (error) {
+            next(error)
         }
     }
 }

@@ -1,11 +1,12 @@
-import dotenv from 'dotenv';
-dotenv.config();
-
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import morgan from 'morgan';
 import routes from './routes/index';
+import { errorMiddleware } from './middleware/error';
+//import Application constants
+import constants from './constants/index';
+
 
 
 //Middleware
@@ -18,13 +19,16 @@ app.use(morgan('dev'))
 
 
 //Routes
-app.use('/api',routes.authRouter)
+app.use('/api', routes.authRouter)
+
+//error middleware
+app.use(errorMiddleware)
 
 //DB
 import './config/database'
 
 //server listening
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-    console.log('Server is running on port',PORT)
+
+app.listen(constants.PORT, () => {
+    console.log('Server is running on port',constants.PORT)
 })

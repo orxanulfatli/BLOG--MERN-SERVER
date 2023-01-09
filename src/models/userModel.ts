@@ -1,4 +1,5 @@
 import { Schema, model } from 'mongoose';
+import {IUser} from '../config/interface'
 
 const userSchema = new Schema({
     name: {
@@ -27,10 +28,10 @@ const userSchema = new Schema({
     },
     type: {
         type: String,
-        default:'normal'//fast
+        default:'register'//login
     }
 }, {
     timestamps:true
 })
 
-export default model('User', userSchema)
+export default model<IUser>('User', userSchema)
