@@ -4,6 +4,7 @@ import cookieParser from 'cookie-parser';
 import morgan from 'morgan';
 import routes from './routes/index';
 import { errorMiddleware } from './middleware/error';
+
 //import Application constants
 import constants from './constants/index';
 

@@ -1,135 +1,155 @@
-import { NextFunction, Request, Response } from 'express';
-import { ApiError } from '../utils/apiErrors';
+import { NextFunction, Request, Response } from "express";
+import { ApiError } from "../utils/apiErrors";
 
-import Users from '../models/userModel';
-import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
-import { generateAccessToken, generateActiveToken } from '../config/generateToken';
-import sendMail from '../config/sendMail';
-import { validateEmail,validPhone } from '../middleware/valid';
-import { sendSms } from '../config/sendSMS';
-import { INewUser, IDecodedToken } from '../config/interface'
-import loginService from '../services/loginService';
-import tokenService from '../services/tokenService';
+import Users from "../models/userModel";
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+import {
+    generateAccessToken,
+    generateActiveToken,
+} from "../config/generateToken";
+import sendMail from "../config/sendMail";
+import { validateEmail, validPhone } from "../middleware/valid";
+import { sendSms } from "../config/sendSMS";
+import { INewUser, IDecodedToken } from "../config/interface";
+import loginService from "../services/loginService";
+import tokenService from "../services/tokenService";
+import { nextTick } from "process";
 
-
-const CLIENT_URL = `${process.env.BASE_URL}`
-
+const CLIENT_URL = `${process.env.BASE_URL}`;
+/*you can make register and activation same in heroku first in register get only 
+name and account then in activation get password and activate account and login in*/
 class AuthCtrl {
-    register = async (req: Request, res: Response) => {
+    register = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const { name, account, password } = req.body;
             const user = await Users.findOne({ account });
-            if (user) return res.status(400).json({ msg: 'Email or Phone number already exists.' });
+            if (user)
+                throw ApiError.BadRequest("Email or Phone number already exists.");
 
-            const passwordHash = await bcrypt.hash(password, 12)
+            const passwordHash = await bcrypt.hash(password, 12);
             const newUser = {
-                name,account,password:passwordHash
-            }
-            
-            const activeToken = generateActiveToken({ newUser })
+                name,
+                account,
+                password: passwordHash,
+            };
 
-            const url = `${CLIENT_URL}/active/${activeToken}`
+            const activeToken = generateActiveToken({ newUser });
+
+            const url = `${CLIENT_URL}/active/${activeToken}`;
             if (validateEmail(account)) {
-                sendMail(account, url, 'Verify your email address.');
-                return res.json({msg:'Success! Please check your email.'})
+                sendMail(account, url, "Verify your email address.");
+                return res.json({
+                    success: true,
+                    message: "Success! Please check your email to activate you account.",
+                });
             } else if (validPhone(account)) {
-                sendSms(account, url, 'Verify your phone number')
-                return res.json({ msg: 'Success! Please check your phone.' })
+                sendSms(account, url, "Verify your phone number");
+                return res.json({
+                    success: true,
+                    message: "Success! Please check your phone to activate you account.",
+                });
             }
             res.json({
-                msg: 'Register successfully.',
+                message: "Register successfully.",
                 data: newUser,
-                activeToken
-            })
-
+                activeToken,
+            });
         } catch (error: any) {
-            return res.status(500).json({ msg: error.message })
+            next(error);
         }
-    }
+    };
 
-    activeAccount = async (req: Request, res: Response) => {
+    activeAccount = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const { activeToken } = req.body;
-            const decoded = <IDecodedToken>jwt.verify(activeToken, `${process.env.ACTIVE_TOKEN_SECRET}`);
-            const { newUser } = decoded
-            
-            if (!newUser) return res.status(400).json({ msg: "Invalid authentication." })
 
-            const user = new Users(newUser)
-            await user.save()
+            const decoded = tokenService.validateActiveToken(activeToken);
+            if (!decoded) {
+                 return next(ApiError.BadRequest("Invalid authentication."))
+            };
 
-            res.json({ msg: "Account has been activated!" })
+            const { newUser } = decoded;
+            const user = new Users(newUser);
+            await user.save();
+
+            res.json({ message: "Account has been activated!" });
         } catch (err: any) {
-            let errMsg;
+            // let errMsg;
 
-            if (err.code === 11000) {
-                errMsg = Object.keys(err.keyValue)[0] + " already exists."
-            } else {
-                let name = Object.keys(err.errors)[0]
-                errMsg = err.errors[`${name}`].message
-            }
+            // if (err.code === 11000) {
+            //     errMsg = Object.keys(err.keyValue)[0] + " already exists."
+            // } else {
+            //     let name = Object.keys(err.errors)[0]
+            //     errMsg = err.errors[`${name}`].message
+            // }
 
-            return res.status(500).json({ msg: errMsg })
+            // return res.status(500).json({ msg: errMsg })
+            next(err);
         }
-    }
+    };
 
-    login = async (req: Request, res: Response,next:NextFunction) => {
+    login = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const { account, password } = req.body;
-            
-            const { accessToken, refreshToken, user } = await loginService.login(password, account)
-            
-            res.cookie('refreshToken', refreshToken, {
+
+            const { accessToken, refreshToken, user } = await loginService.login(
+                password,
+                account
+            );
+
+            res.cookie("refreshToken", refreshToken, {
                 httpOnly: true,
                 path: `/api/refresh_token`,
-                maxAge: 30 * 24 * 60 * 60 * 1000,//30 days
-            })
-            
-            res.json({msg:'Login Success!',accessToken,user})
-        } catch (err:any) {
-            next(err)
+                maxAge: 30 * 24 * 60 * 60 * 1000, //30 days
+            });
+
+            res.json({ success: true, message: "Login Success!", accessToken, user });
+        } catch (err: any) {
+            next(err);
         }
-    }
+    };
 
     logout = async (req: Request, res: Response, next: NextFunction) => {
         try {
-            res.clearCookie('refreshToken', {
-                path: `/api/refresh_token`
-            })
+            res.clearCookie("refreshToken", {
+                path: `/api/refresh_token`,
+            });
 
-            return res.json({msg:'Logged out!'})
+            return res.json({ msg: "Logged out!" });
         } catch (error) {
-            next(error)
+            next(error);
         }
-    }
+    };
 
     refresh = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const { refreshToken } = req.cookies;
             if (!refreshToken) {
-                throw ApiError.UnauthorizedError()
+                throw ApiError.UnauthorizedError();
             }
 
             //validate refres token
-            const decoded = <IDecodedToken>tokenService.validateRefreshToken(refreshToken)
+            const decoded = <IDecodedToken>(
+                tokenService.validateRefreshToken(refreshToken)
+            );
             if (!decoded) {
-                throw ApiError.UnauthorizedError()
+                throw ApiError.UnauthorizedError();
             }
 
-            const user = await Users.findById(decoded.id).select('-password');
+            const user = await Users.findById(decoded.id).select("-password");
             if (!user) {
-                throw ApiError.BadRequest('This account does not exist.')
+                throw ApiError.BadRequest("This account does not exist.");
             }
 
-            const accessToken = generateAccessToken({ id: user.id })
-            //you must also generate new refresh token and send with cookie and 
+            const accessToken = generateAccessToken({ id: user.id });
+            //you must also generate new refresh token and send with cookie and
             //dont forget model in db for refresh token
-            res.json({msg:'Success!',accessToken})
+            res.json({ msg: "Success!", accessToken });
         } catch (error) {
-            next(error)
+            next(error);
         }
-    }
+    };
 }
 
 export default new AuthCtrl();
