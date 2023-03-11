@@ -3,7 +3,6 @@ import { ApiError } from "../utils/apiErrors";
 
 import Users from "../models/userModel";
 import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
 import {
     generateAccessToken,
     generateActiveToken,
@@ -60,7 +59,7 @@ class AuthCtrl {
         }
     };
 
-    activeAccount = async (req: Request, res: Response, next: NextFunction) => {
+    activateAccount = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const { activeToken } = req.body;
 
@@ -68,10 +67,12 @@ class AuthCtrl {
             if (!decoded) {
                  return next(ApiError.BadRequest("Invalid authentication."))
             };
-
-            const { newUser } = decoded;
-            const user = new Users(newUser);
-            await user.save();
+            const user = await Users.findOne({ account: decoded.newUser?.account })
+            if (user) {
+                return next(ApiError.BadRequest('Account already activated'))
+            }
+            const newUser = new Users(decoded.newUser);
+            await newUser.save();
 
             res.json({ message: "Account has been activated!" });
         } catch (err: any) {
@@ -145,7 +146,7 @@ class AuthCtrl {
             const accessToken = generateAccessToken({ id: user.id });
             //you must also generate new refresh token and send with cookie and
             //dont forget model in db for refresh token
-            res.json({ msg: "Success!", accessToken });
+            res.json({ success: true,message: "Success!", accessToken,user });
         } catch (error) {
             next(error);
         }
