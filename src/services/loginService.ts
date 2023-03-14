@@ -2,16 +2,11 @@ import Users from '../models/userModel';
 import { ApiError } from '../utils/apiErrors';
 import bcrypt from 'bcrypt';
 import {generateAccessToken,generateRefreshToken} from '../config/generateToken'
+import { IUser } from '../config/interface';
 
 class LoginService {
-    login = async (password: string, account: string) => {
-        
-         //check user is exist or not
-        const user = await Users.findOne({ account }); 
-        if (!user) {
-            throw ApiError.BadRequest('This account does not exist!')
-        }
-        
+    login = async (user:IUser,password: string) => {
+           
         //check password match or not 
         const isPasswordMatched = await bcrypt.compare(password,user.password);
         if (!isPasswordMatched) {
