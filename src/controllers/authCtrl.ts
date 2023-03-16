@@ -201,10 +201,10 @@ class AuthCtrl {
               account: phone,
               password: passwordHash,
               type: 'login'
-          }
+          }  
           registerUser(user, res)
       }
-    } catch (error) {
+    } catch (error:any) {
       next(error);
     }
   };
