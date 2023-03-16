@@ -24,6 +24,8 @@ app.use(morgan('dev'))
 
 //Routes
 app.use('/api', routes.authRouter)
+app.use('/api', routes.userRouter)
+
 
 //error middleware
 app.use(errorMiddleware)
