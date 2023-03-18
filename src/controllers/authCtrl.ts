@@ -200,7 +200,7 @@ class AuthCtrl {
               name: phone,
               account: phone,
               password: passwordHash,
-              type: 'login'
+              type: 'sms'
           }  
           registerUser(user, res)
       }
