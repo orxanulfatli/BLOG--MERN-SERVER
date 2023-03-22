@@ -6,7 +6,8 @@ import Users from '../models/userModel'
 
 
 export const auth =async (req: IReqAuth,res:Response,next:NextFunction) => {
-   try {
+    try {
+       
        const authorizationHeader = req.header('Authorization')
        if (!authorizationHeader) return next(ApiError.UnauthorizedError());
 
@@ -22,7 +23,8 @@ export const auth =async (req: IReqAuth,res:Response,next:NextFunction) => {
        req.user = user
        next()
       
-   } catch (error:any) {
+   } catch (error: any) {
+       console.log('tere')
        next(ApiError.UnauthorizedError())
    }
 }
