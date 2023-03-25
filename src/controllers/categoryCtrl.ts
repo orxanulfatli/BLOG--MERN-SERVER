@@ -13,7 +13,7 @@ class CategoryController {
       const newCategory = new Categories({ name });
       await newCategory.save();
    
-      res.json({ newCategory });
+      res.json(newCategory);
     } catch (error) {
       next(error);
     }
@@ -39,7 +39,7 @@ class CategoryController {
         { name: req.body.name }
       );
 
-      res.json({ msg: "Update Success!" });
+      res.json({ message: "Update Success!" });
     } catch (error) {
       next(error);
     }
@@ -51,7 +51,7 @@ class CategoryController {
       if (req.user.role !== "admin") throw ApiError.UnauthorizedError();
       await Categories.findByIdAndDelete(req.params.id);
 
-      res.json({ msg: "Delete Success!" });
+      res.json({ message: "Delete Success!" });
     } catch (error) {
       next(error);
     }
