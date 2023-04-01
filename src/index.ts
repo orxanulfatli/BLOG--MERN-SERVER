@@ -26,6 +26,7 @@ app.use(morgan('dev'))
 app.use('/api', routes.authRouter)
 app.use('/api', routes.userRouter)
 app.use('/api', routes.categoryRouter)
+app.use('/api',routes.blogRouter)
 
 
 
