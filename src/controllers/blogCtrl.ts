@@ -1,9 +1,16 @@
 import { NextFunction, Request, Response } from "express"
+import mongoose from "mongoose";
 import { IReqAuth } from "../config/interface"
 import { ApiError } from "../utils/apiErrors";
 import Blogs from '../models/blogModel'
 
+const Pagination = (req: IReqAuth) => {
+    let page = Number(req.query.page) * 1 || 1;
+    let limit = Number(req.query.limit) * 1 || 4;
+    let skip = (page - 1) * limit;
 
+    return { page, limit, skip };
+}
 class BlogController {
     createBlog = async (req:IReqAuth,res:Response,next:NextFunction) => {
         try {
@@ -53,7 +60,7 @@ class BlogController {
             // array -> object
             { $unwind: "$category" },
             // Sorting
-            { $sort: { "createdAt": -1 } },
+            { $sort: { createdAt: 1 } },
             // Group by category
             {
                 $group: {
@@ -81,7 +88,74 @@ class BlogController {
        next(error)
        
     }
-}
+    }
+    
+    getBlogsByCategory =async (req:Request,res:Response,next:NextFunction) => {
+        try {
+            const { limit, skip } = Pagination(req)
+            const Data = await Blogs.aggregate([
+                {
+                    $facet: {
+                        totalData: [
+                            {
+                                $match: {
+                                    category: new mongoose.Types.ObjectId(req.params.category_id)
+                                }
+                            },
+                            // User
+                            {
+                                $lookup: {
+                                    from: "users",
+                                    let: { user_id: "$user" },
+                                    pipeline: [
+                                        { $match: { $expr: { $eq: ["$_id", "$$user_id"] } } },
+                                        { $project: { password: 0 } }
+                                    ],
+                                    as: "user"
+                                }
+                            },
+                            // array -> object
+                            { $unwind: "$user" },
+                            // Sorting
+                            { $sort: { createdAt: -1 } },
+                            { $skip: skip },
+                            { $limit: limit }
+                        ],
+                        totalCount: [
+                            {
+                                $match: {
+                                    category:new mongoose.Types.ObjectId(req.params.category_id)
+                                }
+                            },
+                            { $count: 'count' }
+                        ]
+                    }
+                },
+                {
+                    $project: {
+                        count: { $arrayElemAt: ["$totalCount.count", 0] },
+                        totalData: 1
+                    }
+                }
+            ])
+
+            const blogs = Data[0].totalData;
+            const count = Data[0].count;
+
+            // Pagination
+            let total = 0;
+
+            if (count % limit === 0) {
+                total = count / limit;
+            } else {
+                total = Math.floor(count / limit) + 1;
+            }
+
+            res.json({ blogs, total })
+        } catch (error) {
+            next(error)
+        }
+    }
 };
  
 export default new BlogController()
