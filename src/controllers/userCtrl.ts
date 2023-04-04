@@ -1,4 +1,4 @@
-import { Response, NextFunction } from "express";
+import { Response, NextFunction, Request } from "express";
 import { IReqAuth } from "../config/interface";
 import { ApiError } from "../utils/apiErrors";
 import Users from "../models/userModel";
@@ -37,6 +37,16 @@ class UserController {
         next(error)
     }
   }
+
+  getUser= async (req: Request, res: Response,next:NextFunction) => {
+  try {
+    const user = await Users.findById(req.params.id).select('-password');
+    if(!user) throw ApiError.BadRequest('User does not exist')
+    res.json(user)
+  } catch (error) {
+    next(error)
+  }
+}
 }
 
 export default new UserController();
