@@ -157,7 +157,7 @@ class BlogController {
         }
     };
 
-    getBlogsByUser = async (req: Request, res: Response) => {
+    getBlogsByUser = async (req: Request, res: Response,next:NextFunction) => {
     const { limit, skip } = Pagination(req)
 
     try {
@@ -220,10 +220,21 @@ class BlogController {
         }
 
         res.json({ blogs, total })
-    } catch (err: any) {
-        return res.status(500).json({ msg: err.message })
+    } catch (error) {
+        next(error)
     }
 }
+
+    getBlog = async (req:Request,res:Response,next:NextFunction) => {
+        try {
+            console.log(req.params.id)
+            const blog =await Blogs.findOne({ _id: req.params.id }).populate('user', '-password');
+            if (!blog) throw ApiError.BadRequest('blog does not exist.');
+            return res.json(blog)
+        } catch (error) {
+            next(error)
+        }
+    }
 };
  
 export default new BlogController()
