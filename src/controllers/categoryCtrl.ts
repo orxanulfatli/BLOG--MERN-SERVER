@@ -56,5 +56,7 @@ class CategoryController {
       next(error);
     }
   };
+
+  
 }
 export default new CategoryController();
