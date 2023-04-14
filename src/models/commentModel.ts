@@ -8,7 +8,8 @@ const commentSchema = new Schema({
     blog_user_id:Types.ObjectId,
     content: { type: String, required: true },
     replyCM: [{ type: Types.ObjectId, ref: 'comment' }],
-    reply_user: { type:Types.ObjectId, ref: 'user' },
+    reply_user: { type: Types.ObjectId, ref: 'user' },
+    comment_root: { type: Types.ObjectId, ref: 'comment' }
 
 }, {
     timestamps: true
