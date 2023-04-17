@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node src/dist/index.js",
     "dev": "ts-node-dev src/index.ts",
-    "build": "npm install&&tsc"
+    "build": "npm install --force&&tsc"
   },
   "keywords": [],
   "author": "",
