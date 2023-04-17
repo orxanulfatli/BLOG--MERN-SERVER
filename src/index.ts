@@ -10,7 +10,7 @@ import constants from './constants/index';
 
 import { createServer } from 'http'
 //import socket io
-import socketIO, { Server, Socket } from 'socket.io'
+import  { Server, Socket } from 'socket.io'
 
 
 
@@ -20,7 +20,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cors({
     credentials: true,
-    origin: ["http://localhost:3000"]
+    origin: ["https://blog-ulfatli.netlify.app",'http://localhost:3000']
 }));
 app.use(cookieParser());
 app.use(morgan('dev'));
@@ -29,7 +29,8 @@ app.use(morgan('dev'));
 const http = createServer(app);
 export const io = new Server(http, {
     cors: {
-        origin: ["http://localhost:3000"]
+        credentials: true,
+        origin: ["https://blog-ulfatli.netlify.app",'http://localhost:3000']
     }
 });
  import {SocketServer} from './config/socket'
