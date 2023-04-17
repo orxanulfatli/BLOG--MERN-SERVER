@@ -24,7 +24,6 @@ export const auth =async (req: IReqAuth,res:Response,next:NextFunction) => {
        next()
       
    } catch (error: any) {
-       console.log('tere')
        next(ApiError.UnauthorizedError())
    }
 }

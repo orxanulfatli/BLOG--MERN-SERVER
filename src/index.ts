@@ -8,6 +8,10 @@ import { errorMiddleware } from './middleware/error';
 //import Application constants
 import constants from './constants/index';
 
+import { createServer } from 'http'
+//import socket io
+import socketIO, { Server, Socket } from 'socket.io'
+
 
 
 //Middleware
@@ -16,10 +20,20 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cors({
     credentials: true,
-    origin:["http://localhost:3000"]
+    origin: ["http://localhost:3000"]
 }));
 app.use(cookieParser());
-app.use(morgan('dev'))
+app.use(morgan('dev'));
+
+//socket 
+const http = createServer(app);
+export const io = new Server(http, {
+    cors: {
+        origin: ["http://localhost:3000"]
+    }
+});
+ import {SocketServer} from './config/socket'
+io.on("connection", (socket: Socket) => SocketServer(socket));
 
 
 //Routes
@@ -40,6 +54,6 @@ import './config/database'
 
 //server listening
 
-app.listen(constants.PORT, () => {
-    console.log('Server is running on port',constants.PORT)
-})
+http.listen(constants.PORT, () => {
+    console.log('Server is running on port', constants.PORT)
+});

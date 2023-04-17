@@ -3,6 +3,7 @@ import { IReqAuth } from "../config/interface"
 import { ApiError } from "../utils/apiErrors";
 import Comments from '../models/commentModel'
 import mongoose from "mongoose";
+import {io} from '../index'
 
 
 const Pagination = (req: IReqAuth) => {
@@ -28,7 +29,16 @@ class CommentController {
                 blog_id,
                 blog_user_id
             });
+
+            const data = {
+                ...newComment._doc,
+                user: req.user,
+                createdAt: new Date().toISOString()
+            }
+
+            io.to(`${blog_id}`).emit('createComment', data)
             await newComment.save()
+          
 
             return res.json(newComment)
         } catch (error) {
@@ -162,7 +172,14 @@ class CommentController {
             await Comments.findOneAndUpdate({ _id: comment_root }, {
                 $push: { replyCM: newComment._id }
             })
+            const data = {
+                ...newComment._doc,
+                user: req.user,
+                reply_user: reply_user,
+                createdAt: new Date().toISOString()
+            }
 
+            io.to(`${blog_id}`).emit('replyComment', data)
             await newComment.save()
 
             return res.json(newComment)
@@ -177,16 +194,17 @@ class CommentController {
 
         try {
             if (!req.user) throw ApiError.UnauthorizedError();
-            const { content } = req.body
+            const { data } = req.body
+            console.log(data.content)
 
             const comment = await Comments.findOneAndUpdate({
                 _id: req.params.id, user: req.user.id
-            }, { content })
+            }, { content:data.content })
 
             if (!comment) {
                 throw ApiError.BadRequest("Comment does not exits.")
             }
-
+            io.to(`${data.blog_id}`).emit('updateComment', data)
 
             return res.json({ message: "Update Success!" })
 
@@ -218,6 +236,8 @@ class CommentController {
                 // delete all comments in replyCM
                 await Comments.deleteMany({ _id: { $in: comment.replyCM } })
             }
+
+            io.to(`${comment.blog_id}`).emit('deleteComment', comment)
 
             return res.json({ message: "Delete Success!" })
 

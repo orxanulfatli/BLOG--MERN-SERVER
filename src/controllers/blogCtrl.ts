@@ -227,7 +227,6 @@ class BlogController {
 
     getBlog = async (req:Request,res:Response,next:NextFunction) => {
         try {
-            console.log(req.params.id)
             const blog =await Blogs.findOne({ _id: req.params.id }).populate('user', '-password');
             if (!blog) throw ApiError.BadRequest('blog does not exist.');
             return res.json(blog)
