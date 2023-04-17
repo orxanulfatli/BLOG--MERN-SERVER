@@ -4,9 +4,9 @@
   "description": "",
   "main": "dist/index.js",
   "scripts": {
-    "start": "tsc&&node src/dist/index.js",
+    "start": "node src/dist/index.js",
     "dev": "ts-node-dev src/index.ts",
-    "build": "npm install"
+    "build": "npm install&&tsc"
   },
   "keywords": [],
   "author": "",
