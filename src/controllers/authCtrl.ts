@@ -24,8 +24,6 @@ name and account then in activation get password and activate account and login 
 class AuthCtrl {
   register = async (req: Request, res: Response, next: NextFunction) => {
     try {
-      console.log(CLIENT_URL)
-
       const { name, account, password } = req.body;
       const user = await Users.findOne({ account });
       if (user)
