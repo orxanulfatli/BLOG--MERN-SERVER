@@ -30,11 +30,12 @@ class MailService {
         })
     }
     async sendActivationEmail(to:string, url:string,text:string) {
-        await this.transporter.sendMail({
-            from: constants.SMTP_USER,
-            to,
-            subject: 'Accaunt activation code',
-            html: `
+      try {
+          await this.transporter.sendMail({
+              from: constants.SMTP_USER,
+              to,
+              subject: 'Accaunt activation code',
+              html: `
               <div style="max-width: 700px; margin:auto; border: 10px solid #ddd; padding: 50px 20px; font-size: 110%;">
               <h2 style="text-align: center; text-transform: uppercase;color: teal;">Welcome to the DevAT channel.</h2>
               <p>Congratulations! You're almost set to start using BlogDEV.
@@ -48,7 +49,10 @@ class MailService {
               <div>${url}</div>
               </div>
             `
-        })
+          })
+      } catch (error) {
+        return error
+      }
         
     }
 }
