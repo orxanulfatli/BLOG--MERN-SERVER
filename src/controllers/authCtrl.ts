@@ -104,7 +104,8 @@ class AuthCtrl {
      const userData = await loginService.login(user,password);
 
       res.cookie("refreshToken", userData.refreshToken, {
-        sameSite:'none',
+        sameSite: 'none',
+        secure:true,
         httpOnly: true,
         path: `/api/refresh_token`,
         maxAge: 30 * 24 * 60 * 60 * 1000, //30 days
