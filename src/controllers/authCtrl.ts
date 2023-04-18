@@ -9,6 +9,7 @@ import {
   generateRefreshToken,
 } from "../config/generateToken";
 import sendMail from "../config/sendMail";
+import mailService from "../services/mailService";
 import { validateEmail, validPhone } from "../middleware/valid";
 import { sendSms, smsOTP, smsVerify } from "../config/sendSMS";
 import { INewUser, IDecodedToken, IUserParams } from "../config/interface";
@@ -38,7 +39,7 @@ class AuthCtrl {
 
       const url = `${CLIENT_URL}/active/${activeToken}`;
       if (validateEmail(account)) {
-        sendMail(account, url, "Verify your email address.");
+        mailService.sendActivationEmail(account, url, "Verify your email address.");
         return res.json({
           success: true,
           message: "Success! Please check your email to activate you account.",

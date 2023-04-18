@@ -54,7 +54,7 @@ const sendEmail = async (to: string, url: string, txt: string) => {
           
               <div>${url}</div>
               </div>
-            `,
+            `
         };
 
         const result = await transport.sendMail(mailOptions);
