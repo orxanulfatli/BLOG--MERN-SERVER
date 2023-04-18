@@ -15,14 +15,17 @@ import { sendSms, smsOTP, smsVerify } from "../config/sendSMS";
 import { INewUser, IDecodedToken, IUserParams } from "../config/interface";
 import loginService from "../services/loginService";
 import tokenService from "../services/tokenService";
-import { nextTick } from "process";
 
-const CLIENT_URL = `${process.env.BASE_URL}`;
+
+const prod = process.env.NODE_ENV === 'production'
+const CLIENT_URL = prod ? `${process.env.BASE_NETLIFY_URL}`:`${process.env.BASE_URL}`;
 /*you can make register and activation same in heroku first in register get only 
 name and account then in activation get password and activate account and login in*/
 class AuthCtrl {
   register = async (req: Request, res: Response, next: NextFunction) => {
     try {
+      console.log(CLIENT_URL)
+
       const { name, account, password } = req.body;
       const user = await Users.findOne({ account });
       if (user)

@@ -54,7 +54,9 @@ app.use(errorMiddleware)
 import './config/database'
 
 //server listening
-
+const prod = process.env.NODE_ENV === 'production'
+let CLIENT_URL = prod ? `${process.env.BASE_NETLIFY_URL}` : `${process.env.BASE_URL}`;
 http.listen(constants.PORT, () => {
     console.log('Server is running on port', constants.PORT)
+    console.log(CLIENT_URL)
 });
